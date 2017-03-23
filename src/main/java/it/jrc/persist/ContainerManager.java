@@ -100,10 +100,10 @@ public class ContainerManager<T> {
          */
         Object id = dao.getId(entity);
         System.out.println("Deleting: " + entity);
-        container.removeItem(id);
+     	container.removeItem(id);
+    	container.commit();
         container.refresh();
-        container.commit();
-        container.refresh();
+        
     }
 
     public T findEntity(Object val) {

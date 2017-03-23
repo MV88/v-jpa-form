@@ -44,6 +44,8 @@ public abstract class EditorController<T> extends Panel {
 
     private static final String SAVE_MESSAGE = "Thank you for submitting the data. The data set and the metadata will be reviewed and we keep you informed about the final publication. If we have questions, we will contact you by email.";
     private static final String ERROR_ENTITY_DUPLICATED = "The item you insterted already exists";
+    private static final String ERROR_ENTITY_DELETE = "Cannot delete this item because is already in use. Remove all the associations in order to perform a delete";
+    private static final String ENTITY_DELETED = "Item correctly deleted.";
     
     private Logger logger = LoggerFactory.getLogger(EditorController.class);
 
@@ -113,7 +115,7 @@ public abstract class EditorController<T> extends Panel {
         return fieldGroupMeta;
     }*/
 
-    protected void buildSubmitPanel(SubmitPanel submitPanel) {
+    protected void buildSubmitPanel(final SubmitPanel submitPanel) {
         /*
          * Submit panel
          */
@@ -137,10 +139,17 @@ public abstract class EditorController<T> extends Panel {
 
                             public void onClose(ConfirmDialog dialog) {
                                 if (dialog.isConfirmed()) {
-                                    doDelete();
+                                	try {
+                                		 doDelete();
+                                		 Notification.show(ENTITY_DELETED);
+                                    } catch (PersistenceException e) {
+                                        e.printStackTrace();
+                                        if (e.getCause().getCause().getCause().getCause() instanceof PSQLException) {
+                                            Notification.show(ERROR_ENTITY_DELETE);
+                                        }
+                                    }
                                 }
                             }
-
                         });
             }
         });
@@ -227,8 +236,10 @@ public abstract class EditorController<T> extends Panel {
             logger.error("Delete attempted with null entity.");
             return;
         }
-        containerManager.deleteEntity(entity);
-        doPostDelete(entity);
+    
+	    containerManager.deleteEntity(entity);
+	    doPostDelete(entity);
+	    
     }
 
     /**
